@@ -3,6 +3,7 @@ import SwiftUI
 
 struct CategoriesView: View {
     @Environment(BudgetStore.self) private var store
+    var onAdd: () -> Void
 
     private var slices: [CategorySlice] { store.summary.slices }
     private var total: Double { store.summary.expenses }
@@ -19,7 +20,7 @@ struct CategoriesView: View {
 
             if slices.isEmpty {
                 ContentUnavailableView(
-                    "No spending yet",
+                    "No Spending Yet",
                     systemImage: "chart.pie",
                     description: Text("Add an expense to see this month by category.")
                 )
@@ -37,20 +38,19 @@ struct CategoriesView: View {
                             .cornerRadius(3)
                         }
                         .chartLegend(.hidden)
+                        .accessibilityHidden(true)
                         VStack(spacing: 2) {
                             Text("Spent")
-                                .font(.caption.weight(.medium))
+                                .font(.footnote)
                                 .foregroundStyle(.secondary)
                             Text(Money.format(total))
-                                .font(.title3.weight(.bold).monospacedDigit())
+                                .font(.title3.bold().monospacedDigit())
                         }
                     }
                     .frame(height: 220)
-                    .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
-                    .padding(.vertical, 8)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Spent \(Money.format(total)) this month")
                 }
 
                 Section("Breakdown") {
@@ -60,29 +60,31 @@ struct CategoriesView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
                                     Text(slice.name)
-                                        .font(.subheadline.weight(.medium))
+                                        .font(.body)
                                     Spacer()
                                     Text(Money.format(slice.value))
-                                        .font(.subheadline.monospacedDigit())
+                                        .font(.body.monospacedDigit())
+                                        .foregroundStyle(.secondary)
                                 }
-                                GeometryReader { geo in
-                                    Capsule()
-                                        .fill(Color(.tertiarySystemFill))
-                                        .overlay(alignment: .leading) {
-                                            Capsule()
-                                                .fill(slice.color)
-                                                .frame(width: max(6, geo.size.width * slice.share))
-                                        }
-                                }
-                                .frame(height: 4)
+                                ProgressView(value: slice.share)
+                                    .tint(slice.color)
+                                    .accessibilityHidden(true)
                             }
                         }
                         .padding(.vertical, 4)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(slice.name), \(Money.format(slice.value))")
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Categories")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AddToolbarButton(action: onAdd)
+            }
+        }
     }
 }

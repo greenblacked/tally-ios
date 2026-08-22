@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OverviewView: View {
     @Environment(BudgetStore.self) private var store
+    var onAdd: () -> Void
     @State private var showGoal = false
 
     private var summary: MonthSummary { store.summary }
@@ -18,21 +19,33 @@ struct OverviewView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+        List {
+            Section {
                 MonthPicker()
-                    .frame(maxWidth: .infinity)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
 
+            Section {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Left this month")
-                        .font(.subheadline.weight(.medium))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                     Text(Money.format(summary.remaining))
-                        .font(.system(size: 44, weight: .bold, design: .rounded))
+                        .font(.largeTitle.bold())
                         .monospacedDigit()
                         .foregroundStyle(overspent ? Color.red : Color.primary)
+                        .minimumScaleFactor(0.6)
                 }
+                .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 4))
+                .listRowSeparator(.hidden)
+                .accessibilityElement(children: .combine)
+            }
 
+            Section("This Month") {
                 HStack(spacing: 0) {
                     StatCell(label: "Income", value: Money.format(summary.income), tint: Color(red: 0.20, green: 0.78, blue: 0.35))
                     Divider()
@@ -40,14 +53,15 @@ struct OverviewView: View {
                     Divider()
                     StatCell(label: "Saved", value: Money.format(max(0, summary.remaining)), tint: .primary)
                 }
-                .frame(maxWidth: .infinity)
-                .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                .listRowInsets(EdgeInsets())
+            }
 
+            Section("Savings") {
                 Button { showGoal = true } label: {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Savings goal")
-                                .font(.subheadline.weight(.semibold))
+                            Text("Savings Goal")
+                                .font(.body)
                                 .foregroundStyle(.primary)
                             Text(goalCopy)
                                 .font(.footnote)
@@ -57,21 +71,23 @@ struct OverviewView: View {
                         }
                         Spacer(minLength: 8)
                         Text(Money.format(store.savingsGoal))
-                            .font(.subheadline.monospacedDigit())
+                            .font(.body.monospacedDigit())
                             .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.tertiary)
                     }
-                    .padding(16)
+                    .padding(.vertical, 4)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                .accessibilityHint("Opens the savings goal editor")
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
         }
+        .listStyle(.insetGrouped)
         .navigationTitle("Tally")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AddToolbarButton(action: onAdd)
+            }
+        }
         .sheet(isPresented: $showGoal) {
             GoalFormView()
         }
@@ -86,10 +102,10 @@ private struct StatCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.caption.weight(.medium))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .font(.body.weight(.semibold).monospacedDigit())
                 .foregroundStyle(tint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -97,5 +113,6 @@ private struct StatCell: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 14)
+        .accessibilityElement(children: .combine)
     }
 }
