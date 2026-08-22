@@ -2,7 +2,6 @@ import SwiftUI
 
 struct OverviewView: View {
     @Environment(BudgetStore.self) private var store
-    var onAdd: () -> Void
     @State private var showGoal = false
 
     private var summary: MonthSummary { store.summary }
@@ -42,7 +41,7 @@ struct OverviewView: View {
                     StatCell(label: "Saved", value: Money.format(max(0, summary.remaining)), tint: .primary)
                 }
                 .frame(maxWidth: .infinity)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .glassEffect(.regular, in: .rect(cornerRadius: 16))
 
                 Button { showGoal = true } label: {
                     HStack(spacing: 12) {
@@ -65,27 +64,14 @@ struct OverviewView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .padding(16)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                .glassEffect(.regular, in: .rect(cornerRadius: 16))
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Tally")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onAdd) {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.bold))
-                        .frame(width: 32, height: 32)
-                        .foregroundStyle(.white)
-                        .background(Color(red: 0, green: 0.48, blue: 1), in: Circle())
-                }
-                .accessibilityLabel("Add transaction")
-            }
-        }
         .sheet(isPresented: $showGoal) {
             GoalFormView()
         }

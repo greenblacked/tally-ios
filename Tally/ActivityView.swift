@@ -26,73 +26,53 @@ struct ActivityView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+        List {
+            Section {
                 MonthPicker()
                     .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+            }
 
+            Section {
                 Picker("Filter", selection: $filter) {
                     Text("All").tag(Optional<TxType>.none)
                     Text("Expenses").tag(Optional.some(TxType.expense))
                     Text("Income").tag(Optional.some(TxType.income))
                 }
                 .pickerStyle(.segmented)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+            }
 
-                if items.isEmpty {
-                    VStack(spacing: 10) {
-                        Text("Nothing here yet")
-                            .font(.headline)
-                        Text("Add income or an expense for this month.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                        Button("Add transaction", action: onAdd)
-                            .buttonStyle(.borderedProminent)
-                            .padding(.top, 6)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 48)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                } else {
-                    ForEach(groups, id: \.date) { group in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(Month.parseISO(group.date), format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .textCase(.uppercase)
-                            VStack(spacing: 0) {
-                                ForEach(Array(group.items.enumerated()), id: \.element.id) { index, tx in
-                                    Button { onEdit(tx) } label: {
-                                        TransactionRow(tx: tx)
-                                    }
-                                    .buttonStyle(.plain)
-                                    if index < group.items.count - 1 {
-                                        Divider().padding(.leading, 56)
-                                    }
-                                }
+            if items.isEmpty {
+                ContentUnavailableView {
+                    Label("Nothing here yet", systemImage: "list.bullet")
+                } description: {
+                    Text("Add income or an expense for this month.")
+                } actions: {
+                    Button("Add transaction", systemImage: "plus", action: onAdd)
+                        .buttonStyle(.glassProminent)
+                }
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(groups, id: \.date) { group in
+                    Section {
+                        ForEach(group.items) { tx in
+                            Button { onEdit(tx) } label: {
+                                TransactionRow(tx: tx)
                             }
-                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .buttonStyle(.plain)
                         }
+                    } header: {
+                        Text(Month.parseISO(group.date), format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
         }
-        .background(Color(.systemGroupedBackground))
+        .listStyle(.insetGrouped)
         .navigationTitle("Activity")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onAdd) {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.bold))
-                        .frame(width: 32, height: 32)
-                        .foregroundStyle(.white)
-                        .background(Color(red: 0, green: 0.48, blue: 1), in: Circle())
-                }
-                .accessibilityLabel("Add transaction")
-            }
-        }
     }
 }
 
@@ -117,13 +97,8 @@ struct TransactionRow: View {
             Text("\(tx.type == .income ? "+" : "−")\(Money.format(tx.amount))")
                 .font(.subheadline.weight(.semibold).monospacedDigit())
                 .foregroundStyle(tx.type == .income ? Color(red: 0.20, green: 0.78, blue: 0.35) : Color.primary)
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(minHeight: 56)
+        .padding(.vertical, 2)
         .contentShape(Rectangle())
         .accessibilityLabel("Edit \(tx.note.isEmpty ? tx.category : tx.note)")
     }
