@@ -78,7 +78,6 @@ struct TransactionFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(editing == nil ? "Add" : "Save") { save() }
-                        .fontWeight(.semibold)
                 }
             }
             .alert("Check the amount", isPresented: Binding(
@@ -102,6 +101,7 @@ struct TransactionFormView: View {
             }
         }
         .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 
     private func save() {
@@ -161,7 +161,6 @@ struct GoalFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
-                        .fontWeight(.semibold)
                 }
             }
             .onAppear {
@@ -179,6 +178,7 @@ struct GoalFormView: View {
             }
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 
     private func save() {

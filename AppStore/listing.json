@@ -12,9 +12,9 @@
     "tracking": false,
     "storage": "On-device only (UserDefaults). No account, no cloud, no ads."
   },
-  "description": "Tally is a calm monthly budget for iPhone.\n\nSee what’s left this month, log income and spending, and keep a savings goal in view — without accounts or ads. Everything stays on your phone.\n\n• Remaining balance for the month you pick\n• Income, spent, and saved at a glance\n• Activity list grouped by day\n• Spending by category\n• Savings goal with progress\n• Add, edit, and delete transactions\n\nTally is built for people who want a ledger, not a social network.",
+  "description": "Tally is a calm monthly budget for iPhone, built for iOS 26.\n\nSee what’s left this month, log income and spending, and keep a savings goal in view — without accounts or ads. Everything stays on your phone.\n\n• Remaining balance always in reach\n• Income, spent, and saved at a glance\n• Activity list grouped by day\n• Spending by category\n• Savings goal with progress\n• Add, edit, and delete transactions\n\nTally is built for people who want a ledger, not a social network.",
   "keywords": "budget,expense tracker,spending,savings,finance,money,ledger",
-  "whatsNew": "First release: monthly budget, activity, and category spending on iPhone.",
+  "whatsNew": "Requires iOS 26. Liquid Glass tab bar, remaining-balance accessory, and system glass controls.",
   "supportUrl": "https://github.com/greenblacked/tally-ios",
   "marketingUrl": "https://github.com/greenblacked/tally-ios",
   "privacyPolicyUrl": "https://raw.githubusercontent.com/greenblacked/tally-ios/main/privacy.html",

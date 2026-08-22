@@ -1,34 +1,74 @@
 import SwiftUI
 
+enum AppTab: Hashable {
+    case overview
+    case activity
+    case categories
+}
+
 struct RootView: View {
     @Environment(BudgetStore.self) private var store
+    @State private var tab: AppTab = .overview
     @State private var showAdd = false
     @State private var editing: Transaction?
 
     var body: some View {
-        TabView {
-            NavigationStack {
-                OverviewView(onAdd: { showAdd = true })
+        TabView(selection: $tab) {
+            Tab("Overview", systemImage: "banknote", value: .overview) {
+                NavigationStack {
+                    OverviewView()
+                }
             }
-            .tabItem { Label("Overview", systemImage: "banknote") }
-
-            NavigationStack {
-                ActivityView(onAdd: { showAdd = true }, onEdit: { editing = $0 })
+            Tab("Activity", systemImage: "list.bullet", value: .activity) {
+                NavigationStack {
+                    ActivityView(onAdd: { showAdd = true }, onEdit: { editing = $0 })
+                }
             }
-            .tabItem { Label("Activity", systemImage: "list.bullet") }
-
-            NavigationStack {
-                CategoriesView(onAdd: { showAdd = true })
+            Tab("Categories", systemImage: "chart.pie.fill", value: .categories) {
+                NavigationStack {
+                    CategoriesView()
+                }
             }
-            .tabItem { Label("Categories", systemImage: "chart.pie.fill") }
         }
         .tint(Color(red: 0, green: 0.48, blue: 1))
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabViewBottomAccessory {
+            RemainingAccessory(onAdd: { showAdd = true })
+        }
         .sheet(isPresented: $showAdd) {
             TransactionFormView(editing: nil)
         }
         .sheet(item: $editing) { item in
             TransactionFormView(editing: item)
         }
+    }
+}
+
+struct RemainingAccessory: View {
+    @Environment(BudgetStore.self) private var store
+    var onAdd: () -> Void
+
+    private var remaining: Double { store.summary.remaining }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Left this month")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(Money.format(remaining))
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(remaining < 0 ? Color.red : Color.primary)
+            }
+            Spacer(minLength: 8)
+            Button("Add transaction", systemImage: "plus", action: onAdd)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.circle)
+                .controlSize(.large)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 }
 
@@ -58,6 +98,7 @@ struct MonthPicker: View {
             }
         }
         .foregroundStyle(Color(red: 0, green: 0.48, blue: 1))
+        .accessibilityElement(children: .contain)
     }
 }
 
