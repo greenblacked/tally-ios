@@ -29,7 +29,6 @@ struct ActivityView: View {
         List {
             Section {
                 MonthPicker()
-                    .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
@@ -44,16 +43,16 @@ struct ActivityView: View {
                 .pickerStyle(.segmented)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                .accessibilityLabel("Filter transactions")
             }
 
             if items.isEmpty {
                 ContentUnavailableView {
-                    Label("Nothing here yet", systemImage: "list.bullet")
+                    Label("Nothing Here Yet", systemImage: "list.bullet")
                 } description: {
                     Text("Add income or an expense for this month.")
                 } actions: {
-                    Button("Add transaction", systemImage: "plus", action: onAdd)
-                        .buttonStyle(.glassProminent)
+                    Button("Add Transaction", systemImage: "plus", action: onAdd)
                 }
                 .listRowBackground(Color.clear)
             } else {
@@ -73,6 +72,12 @@ struct ActivityView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Activity")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AddToolbarButton(action: onAdd)
+            }
+        }
     }
 }
 
@@ -84,22 +89,23 @@ struct TransactionRow: View {
             CategoryGlyph(name: tx.category)
             VStack(alignment: .leading, spacing: 2) {
                 Text(tx.note.isEmpty ? tx.category : tx.note)
-                    .font(.subheadline.weight(.medium))
+                    .font(.body)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 if !tx.note.isEmpty {
                     Text(tx.category)
-                        .font(.caption)
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)
             Text("\(tx.type == .income ? "+" : "−")\(Money.format(tx.amount))")
-                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .font(.body.monospacedDigit())
                 .foregroundStyle(tx.type == .income ? Color(red: 0.20, green: 0.78, blue: 0.35) : Color.primary)
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
-        .accessibilityLabel("Edit \(tx.note.isEmpty ? tx.category : tx.note)")
+        .accessibilityLabel("\(tx.note.isEmpty ? tx.category : tx.note), \(tx.type == .income ? "income" : "expense") \(Money.format(tx.amount))")
+        .accessibilityHint("Opens editor")
     }
 }
