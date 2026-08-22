@@ -1,0 +1,22 @@
+{
+  "name": "Tally",
+  "subtitle": "Monthly budget, kept simple",
+  "bundleId": "app.tally.budget",
+  "sku": "tally-budget-001",
+  "primaryCategory": "Finance",
+  "secondaryCategory": "Lifestyle",
+  "ageRating": "4+",
+  "price": "Free",
+  "privacy": {
+    "dataCollected": false,
+    "tracking": false,
+    "storage": "On-device only (UserDefaults). No account, no cloud, no ads."
+  },
+  "description": "Tally is a calm monthly budget for iPhone.\n\nSee what’s left this month, log income and spending, and keep a savings goal in view — without accounts or ads. Everything stays on your phone.\n\n• Remaining balance for the month you pick\n• Income, spent, and saved at a glance\n• Activity list grouped by day\n• Spending by category\n• Savings goal with progress\n• Add, edit, and delete transactions\n\nTally is built for people who want a ledger, not a social network.",
+  "keywords": "budget,expense tracker,spending,savings,finance,money,ledger",
+  "whatsNew": "First release: monthly budget, activity, and category spending on iPhone.",
+  "supportUrl": "https://github.com/greenblacked/tally-ios",
+  "marketingUrl": "https://github.com/greenblacked/tally-ios",
+  "privacyPolicyUrl": "https://raw.githubusercontent.com/greenblacked/tally-ios/main/privacy.html",
+  "copyright": "2026 Serhii Zolotov"
+}
