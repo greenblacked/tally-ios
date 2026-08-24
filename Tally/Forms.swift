@@ -17,7 +17,7 @@ struct TransactionFormView: View {
     init(editing: Transaction?) {
         self.editing = editing
         _type = State(initialValue: editing?.type ?? .expense)
-        _amount = State(initialValue: editing.map { String($0.amount) } ?? "")
+        _amount = State(initialValue: editing.map { Money.editable($0.amount) } ?? "")
         _category = State(initialValue: editing?.category ?? "Food")
         _note = State(initialValue: editing?.note ?? "")
         _date = State(initialValue: editing.map { Month.parseISO($0.date) } ?? Date())
@@ -105,19 +105,18 @@ struct TransactionFormView: View {
     }
 
     private func save() {
-        let cleaned = amount.replacingOccurrences(of: "[^0-9.]", with: "", options: .regularExpression)
-        guard let value = Double(cleaned), value > 0 else {
+        guard let rounded = AmountParser.parse(amount) else {
             error = "Enter an amount greater than zero."
             return
         }
-        let rounded = (value * 100).rounded() / 100
         let item = Transaction(
             id: editing?.id ?? UUID().uuidString,
             type: type,
             amount: rounded,
             category: category,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
-            date: Month.isoDate(date)
+            date: Month.isoDate(date),
+            createdAt: editing?.createdAt ?? Date()
         )
         if editing == nil {
             store.add(item)
@@ -143,7 +142,7 @@ struct GoalFormView: View {
             Form {
                 Section {
                     HStack {
-                        Text("$")
+                        Text(Money.currencySymbol)
                             .foregroundStyle(.secondary)
                         TextField("0", text: $value)
                             .keyboardType(.decimalPad)
@@ -165,7 +164,7 @@ struct GoalFormView: View {
             }
             .onAppear {
                 if value.isEmpty {
-                    value = String(store.savingsGoal)
+                    value = Money.editable(store.savingsGoal)
                 }
             }
             .alert("Check the amount", isPresented: Binding(
@@ -182,12 +181,11 @@ struct GoalFormView: View {
     }
 
     private func save() {
-        let cleaned = value.replacingOccurrences(of: "[^0-9.]", with: "", options: .regularExpression)
-        guard let amount = Double(cleaned), amount > 0 else {
+        guard let amount = AmountParser.parse(value) else {
             error = "Enter a savings goal greater than zero."
             return
         }
-        store.setGoal((amount * 100).rounded() / 100)
+        store.setGoal(amount)
         dismiss()
     }
 }
