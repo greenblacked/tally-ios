@@ -16,6 +16,28 @@ struct Transaction: Identifiable, Codable, Equatable {
     var category: String
     var note: String
     var date: String
+    /// When the entry was created, used to order entries that share a calendar
+    /// day. Optional so ledgers saved before this field existed still decode;
+    /// those sort after anything stamped.
+    var createdAt: Date?
+
+    init(
+        id: String,
+        type: TxType,
+        amount: Double,
+        category: String,
+        note: String,
+        date: String,
+        createdAt: Date? = nil
+    ) {
+        self.id = id
+        self.type = type
+        self.amount = amount
+        self.category = category
+        self.note = note
+        self.date = date
+        self.createdAt = createdAt
+    }
 }
 
 struct CategorySlice: Identifiable {
@@ -41,20 +63,24 @@ final class BudgetStore {
     var savingsGoal: Double
     var selectedMonth: String
 
-    private let defaults = UserDefaults.standard
-    private let txKey = "tally.transactions"
-    private let goalKey = "tally.goal"
+    private let defaults: UserDefaults
+    static let txKey = "tally.transactions"
+    static let goalKey = "tally.goal"
 
-    init() {
-        if let data = defaults.data(forKey: txKey),
-           let saved = try? JSONDecoder().decode([Transaction].self, from: data),
-           !saved.isEmpty
+    /// - Parameter defaults: injectable so tests can use their own suite instead
+    ///   of writing into the real app's storage.
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        // An empty ledger is a state the user chose by deleting everything, not a
+        // signal to reload sample data. Only an absent key means "first launch".
+        if let data = defaults.data(forKey: Self.txKey),
+           let saved = try? JSONDecoder().decode([Transaction].self, from: data)
         {
             transactions = saved
         } else {
             transactions = Seed.transactions
         }
-        let storedGoal = defaults.double(forKey: goalKey)
+        let storedGoal = defaults.double(forKey: Self.goalKey)
         savingsGoal = storedGoal > 0 ? storedGoal : Seed.goal
         selectedMonth = Month.current
     }
@@ -94,9 +120,9 @@ final class BudgetStore {
 
     private func persist() {
         if let data = try? JSONEncoder().encode(transactions) {
-            defaults.set(data, forKey: txKey)
+            defaults.set(data, forKey: Self.txKey)
         }
-        defaults.set(savingsGoal, forKey: goalKey)
+        defaults.set(savingsGoal, forKey: Self.goalKey)
     }
 }
 
@@ -187,8 +213,15 @@ enum Month {
         let items = transactions
             .filter { $0.date.hasPrefix(month) }
             .sorted {
-                if $0.date == $1.date { return $0.id > $1.id }
-                return $0.date > $1.date
+                guard $0.date == $1.date else { return $0.date > $1.date }
+                // Newest first within a day. Entries with no stamp predate the
+                // field, so they fall below anything stamped; id keeps it stable.
+                switch ($0.createdAt, $1.createdAt) {
+                case let (a?, b?) where a != b: return a > b
+                case (nil, _?): return false
+                case (_?, nil): return true
+                default: return $0.id > $1.id
+                }
             }
         var income = 0.0
         var expenses = 0.0
@@ -209,15 +242,29 @@ enum Month {
 }
 
 enum Money {
-    private static let full: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter
-    }()
+    /// The ledger's currency. Still fixed, but named in one place so a future
+    /// picker has somewhere to write to.
+    static let currencyCode = "USD"
 
-    static func format(_ amount: Double) -> String {
-        full.string(from: NSNumber(value: amount)) ?? "$0.00"
+    /// A shared NumberFormatter would be a non-Sendable global, which Swift 6
+    /// rejects; the format style is a value type, so there is nothing to share.
+    static func format(_ amount: Double, code: String = currencyCode) -> String {
+        amount.formatted(.currency(code: code))
+    }
+
+    /// The symbol `format` actually prints — "$" in en_US, "$US" in fr_FR.
+    /// Derived from a formatted zero rather than `Locale.currencySymbol`, which
+    /// would return the reader's own currency and disagree with the amounts.
+    static var currencySymbol: String {
+        let zero = (0 as Double).formatted(.currency(code: currencyCode))
+        let stripped = zero.filter { !$0.isNumber && !$0.isWhitespace && $0 != "." && $0 != "," }
+        return stripped.isEmpty ? currencyCode : stripped
+    }
+
+    /// Digits only, for prefilling an editable amount field. Uses the locale's
+    /// decimal separator, which AmountParser reads back correctly.
+    static func editable(_ amount: Double) -> String {
+        amount.formatted(.number.precision(.fractionLength(2)).grouping(.never))
     }
 }
 

@@ -51,19 +51,24 @@ struct MonthPicker: View {
                 Image(systemName: "chevron.left")
                     .frame(width: 44, height: 44)
             }
-            Button(action: store.jumpToCurrentMonth) {
+            .accessibilityLabel("Previous month")
+            Button {
+                store.jumpToCurrentMonth()
+            } label: {
                 Text(Month.date(from: store.selectedMonth), format: .dateTime.month(.wide).year())
                     .font(.body.weight(.semibold))
                     .monospacedDigit()
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
+            .accessibilityHint("Jumps to the current month")
             Button {
                 store.shiftMonth(1)
             } label: {
                 Image(systemName: "chevron.right")
                     .frame(width: 44, height: 44)
             }
+            .accessibilityLabel("Next month")
         }
         .foregroundStyle(Color(red: 0, green: 0.48, blue: 1))
         .accessibilityElement(children: .contain)
