@@ -77,8 +77,8 @@ struct RegressionTests {
     /// rejects as a non-Sendable global.
     @Test("Money formats without a shared formatter")
     func moneyFormats() {
-        #expect(!Money.format(1234.5).isEmpty)
-        #expect(!Money.currencySymbol.isEmpty)
+        #expect(!Money.format(1234.5, code: "USD").isEmpty)
+        #expect(!Money.symbol(for: "USD").isEmpty)
         #expect(Money.editable(1850) == Money.editable(1850))
     }
 }
