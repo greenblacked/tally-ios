@@ -24,7 +24,10 @@ struct CategoriesView: View {
                     systemImage: "chart.pie",
                     description: Text("Add an expense to see this month by category.")
                 )
+                .frame(maxWidth: .infinity, minHeight: 340)
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
             } else {
                 Section {
                     ZStack {

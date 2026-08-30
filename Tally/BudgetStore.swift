@@ -126,6 +126,13 @@ final class BudgetStore {
     }
 }
 
+extension Color {
+    /// The green used for income throughout the app.
+    static let income = Color(red: 0.20, green: 0.78, blue: 0.35)
+    /// The app's accent, matching AccentColor in the asset catalog.
+    static let tallyAccent = Color(red: 0, green: 0.48, blue: 1)
+}
+
 enum CategoryCatalog {
     static let expenses = [
         "Housing", "Food", "Transport", "Utilities", "Health",

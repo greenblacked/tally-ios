@@ -5,17 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tally Privacy Policy</title>
     <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --ink: #1c1c1e;
+        --ink-2: #3a3a3c;
+        --link: #0a5fc4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #000000;
+          --ink: #f2f2f7;
+          --ink-2: #aeaeb2;
+          --link: #4da3ff;
+        }
+      }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         max-width: 40rem;
         margin: 3rem auto;
         padding: 0 1.25rem 4rem;
-        color: #1c1c1e;
+        background: var(--bg);
+        color: var(--ink);
         line-height: 1.5;
       }
       h1 { font-size: 1.75rem; }
       h2 { font-size: 1.1rem; margin-top: 1.75rem; }
-      p, li { color: #3a3a3c; }
+      p, li { color: var(--ink-2); }
+      a { color: var(--link); }
     </style>
   </head>
   <body>

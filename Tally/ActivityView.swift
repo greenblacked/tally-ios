@@ -54,7 +54,10 @@ struct ActivityView: View {
                 } actions: {
                     Button("Add Transaction", systemImage: "plus", action: onAdd)
                 }
+                .frame(maxWidth: .infinity, minHeight: 340)
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
             } else {
                 ForEach(groups, id: \.date) { group in
                     Section {
@@ -101,7 +104,7 @@ struct TransactionRow: View {
             Spacer(minLength: 8)
             Text("\(tx.type == .income ? "+" : "−")\(Money.format(tx.amount))")
                 .font(.body.monospacedDigit())
-                .foregroundStyle(tx.type == .income ? Color(red: 0.20, green: 0.78, blue: 0.35) : Color.primary)
+                .foregroundStyle(tx.type == .income ? Color.income : Color.primary)
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())

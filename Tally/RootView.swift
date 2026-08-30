@@ -29,7 +29,7 @@ struct RootView: View {
                 }
             }
         }
-        .tint(Color(red: 0, green: 0.48, blue: 1))
+        .tint(Color.tallyAccent)
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(isPresented: $showAdd) {
             TransactionFormView(editing: nil)
@@ -70,7 +70,7 @@ struct MonthPicker: View {
             }
             .accessibilityLabel("Next month")
         }
-        .foregroundStyle(Color(red: 0, green: 0.48, blue: 1))
+        .foregroundStyle(Color.tallyAccent)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Selected month")
     }

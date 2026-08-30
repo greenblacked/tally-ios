@@ -46,12 +46,22 @@ struct OverviewView: View {
             }
 
             Section("This Month") {
-                HStack(spacing: 0) {
-                    StatCell(label: "Income", value: Money.format(summary.income), tint: Color(red: 0.20, green: 0.78, blue: 0.35))
-                    Divider()
-                    StatCell(label: "Spent", value: Money.format(summary.expenses), tint: .red)
-                    Divider()
-                    StatCell(label: "Saved", value: Money.format(max(0, summary.remaining)), tint: .primary)
+                // "Saved" used to sit here restating the balance already shown
+                // above it. Income and Spent are the two numbers the hero does
+                // not give you, so the row carries those and nothing else.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 0) {
+                        StatCell(label: "Income", value: Money.format(summary.income), tint: Color.income)
+                        Divider()
+                        StatCell(label: "Spent", value: Money.format(summary.expenses), tint: .red)
+                    }
+                    // At the accessibility text sizes two cells cannot share a
+                    // line legibly, so they stack rather than shrink to nothing.
+                    VStack(spacing: 0) {
+                        StatCell(label: "Income", value: Money.format(summary.income), tint: Color.income)
+                        Divider()
+                        StatCell(label: "Spent", value: Money.format(summary.expenses), tint: .red)
+                    }
                 }
                 .listRowInsets(EdgeInsets())
             }
@@ -67,7 +77,7 @@ struct OverviewView: View {
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                             ProgressView(value: overspent ? 0 : progress)
-                                .tint(Color(red: 0, green: 0.48, blue: 1))
+                                .tint(Color.tallyAccent)
                         }
                         Spacer(minLength: 8)
                         Text(Money.format(store.savingsGoal))
@@ -107,8 +117,8 @@ private struct StatCell: View {
             Text(value)
                 .font(.body.weight(.semibold).monospacedDigit())
                 .foregroundStyle(tint)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
