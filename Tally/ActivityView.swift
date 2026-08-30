@@ -66,6 +66,13 @@ struct ActivityView: View {
                                 TransactionRow(tx: tx)
                             }
                             .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    store.delete(id: tx.id)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     } header: {
                         Text(Month.parseISO(group.date), format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
@@ -77,14 +84,27 @@ struct ActivityView: View {
         .navigationTitle("Activity")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
+            // Swiping a row away is a single gesture with no confirmation, so
+            // the way back has to be visible rather than a shake-to-undo secret.
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Undo", systemImage: "arrow.uturn.backward") {
+                    store.undoDelete()
+                }
+                .disabled(store.lastDeleted == nil)
+                .accessibilityLabel("Undo delete")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 AddToolbarButton(action: onAdd)
             }
         }
+        // A stale undo from three screens ago is worse than none.
+        .onDisappear { store.clearUndo() }
     }
 }
 
 struct TransactionRow: View {
+    // Reads the store so the row re-renders when the currency changes.
+    @Environment(BudgetStore.self) private var store
     var tx: Transaction
 
     var body: some View {
@@ -102,13 +122,13 @@ struct TransactionRow: View {
                 }
             }
             Spacer(minLength: 8)
-            Text("\(tx.type == .income ? "+" : "−")\(Money.format(tx.amount))")
+            Text("\(tx.type == .income ? "+" : "−")\(store.money(tx.amount))")
                 .font(.body.monospacedDigit())
                 .foregroundStyle(tx.type == .income ? Color.income : Color.primary)
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
-        .accessibilityLabel("\(tx.note.isEmpty ? tx.category : tx.note), \(tx.type == .income ? "income" : "expense") \(Money.format(tx.amount))")
+        .accessibilityLabel("\(tx.note.isEmpty ? tx.category : tx.note), \(tx.type == .income ? "income" : "expense") \(store.money(tx.amount))")
         .accessibilityHint("Opens editor")
     }
 }
