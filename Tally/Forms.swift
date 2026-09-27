@@ -142,7 +142,7 @@ struct GoalFormView: View {
             Form {
                 Section {
                     HStack {
-                        Text(Money.currencySymbol)
+                        Text(store.currencySymbol)
                             .foregroundStyle(.secondary)
                         TextField("0", text: $value)
                             .keyboardType(.decimalPad)

@@ -13,9 +13,9 @@ struct OverviewView: View {
     }
 
     private var goalCopy: String {
-        if overspent { return "\(Money.format(abs(summary.remaining))) over" }
+        if overspent { return "\(store.money(abs(summary.remaining))) over" }
         if summary.remaining >= store.savingsGoal { return "Goal met" }
-        return "\(Money.format(max(0, store.savingsGoal - summary.remaining))) to go"
+        return "\(store.money(max(0, store.savingsGoal - summary.remaining))) to go"
     }
 
     var body: some View {
@@ -32,7 +32,7 @@ struct OverviewView: View {
                     Text("Left this month")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    Text(Money.format(summary.remaining))
+                    Text(store.money(summary.remaining))
                         .font(.largeTitle.bold())
                         .monospacedDigit()
                         .foregroundStyle(overspent ? Color.red : Color.primary)
@@ -51,16 +51,16 @@ struct OverviewView: View {
                 // not give you, so the row carries those and nothing else.
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 0) {
-                        StatCell(label: "Income", value: Money.format(summary.income), tint: Color.income)
+                        StatCell(label: "Income", value: store.money(summary.income), tint: Color.income)
                         Divider()
-                        StatCell(label: "Spent", value: Money.format(summary.expenses), tint: .red)
+                        StatCell(label: "Spent", value: store.money(summary.expenses), tint: .red)
                     }
                     // At the accessibility text sizes two cells cannot share a
                     // line legibly, so they stack rather than shrink to nothing.
                     VStack(spacing: 0) {
-                        StatCell(label: "Income", value: Money.format(summary.income), tint: Color.income)
+                        StatCell(label: "Income", value: store.money(summary.income), tint: Color.income)
                         Divider()
-                        StatCell(label: "Spent", value: Money.format(summary.expenses), tint: .red)
+                        StatCell(label: "Spent", value: store.money(summary.expenses), tint: .red)
                     }
                 }
                 .listRowInsets(EdgeInsets())
@@ -80,7 +80,7 @@ struct OverviewView: View {
                                 .tint(Color.tallyAccent)
                         }
                         Spacer(minLength: 8)
-                        Text(Money.format(store.savingsGoal))
+                        Text(store.money(store.savingsGoal))
                             .font(.body.monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
@@ -88,6 +88,16 @@ struct OverviewView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens the savings goal editor")
+
+                Picker("Currency", selection: Binding(
+                    get: { store.currencyCode },
+                    set: { store.setCurrency($0) }
+                )) {
+                    ForEach(Money.selectableCodes, id: \.self) { code in
+                        Text("\(code) — \(Money.name(for: code))").tag(code)
+                    }
+                }
+                .pickerStyle(.navigationLink)
             }
         }
         .listStyle(.insetGrouped)

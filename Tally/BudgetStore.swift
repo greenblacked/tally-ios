@@ -48,6 +48,12 @@ struct CategorySlice: Identifiable {
     var share: Double
 }
 
+/// A removed transaction, held just long enough to offer an undo.
+struct DeletedEntry: Equatable {
+    var transaction: Transaction
+    var index: Int
+}
+
 struct MonthSummary {
     var items: [Transaction]
     var income: Double
@@ -62,10 +68,15 @@ final class BudgetStore {
     var transactions: [Transaction]
     var savingsGoal: Double
     var selectedMonth: String
+    /// ISO 4217 code the ledger is kept in.
+    private(set) var currencyCode: String
+    /// The last deleted entry and where it sat, so a delete can be taken back.
+    private(set) var lastDeleted: DeletedEntry?
 
     private let defaults: UserDefaults
     static let txKey = "tally.transactions"
     static let goalKey = "tally.goal"
+    static let currencyKey = "tally.currency"
 
     /// - Parameter defaults: injectable so tests can use their own suite instead
     ///   of writing into the real app's storage.
@@ -82,7 +93,26 @@ final class BudgetStore {
         }
         let storedGoal = defaults.double(forKey: Self.goalKey)
         savingsGoal = storedGoal > 0 ? storedGoal : Seed.goal
+        // No stored preference means follow the device rather than assume dollars.
+        currencyCode = defaults.string(forKey: Self.currencyKey)
+            ?? Locale.current.currency?.identifier
+            ?? Money.fallbackCurrencyCode
         selectedMonth = Month.current
+    }
+
+    /// Formats through the store so that a view reading it also observes the
+    /// currency, and re-renders when it changes.
+    func money(_ amount: Double) -> String {
+        Money.format(amount, code: currencyCode)
+    }
+
+    var currencySymbol: String {
+        Money.symbol(for: currencyCode)
+    }
+
+    func setCurrency(_ code: String) {
+        currencyCode = code
+        defaults.set(code, forKey: Self.currencyKey)
     }
 
     var summary: MonthSummary {
@@ -101,8 +131,23 @@ final class BudgetStore {
     }
 
     func delete(id: String) {
-        transactions.removeAll { $0.id == id }
+        guard let index = transactions.firstIndex(where: { $0.id == id }) else { return }
+        // Deleting a row is one gesture away, so remember enough to put it back
+        // exactly where it was rather than at the top.
+        lastDeleted = DeletedEntry(transaction: transactions.remove(at: index), index: index)
         persist()
+    }
+
+    /// Restores the most recent delete. Does nothing once there is nothing to undo.
+    func undoDelete() {
+        guard let entry = lastDeleted else { return }
+        transactions.insert(entry.transaction, at: min(entry.index, transactions.count))
+        lastDeleted = nil
+        persist()
+    }
+
+    func clearUndo() {
+        lastDeleted = nil
     }
 
     func setGoal(_ amount: Double) {
@@ -249,27 +294,40 @@ enum Month {
 }
 
 enum Money {
-    /// The ledger's currency. Still fixed, but named in one place so a future
-    /// picker has somewhere to write to.
-    static let currencyCode = "USD"
+    /// Used only when the device reports no currency at all.
+    static let fallbackCurrencyCode = "USD"
 
-    /// A shared NumberFormatter would be a non-Sendable global, which Swift 6
-    /// rejects; the format style is a value type, so there is nothing to share.
-    static func format(_ amount: Double, code: String = currencyCode) -> String {
+    /// Offered in the picker. Deliberately short — the point is to cover the
+    /// common cases, not to mirror ISO 4217 in a budgeting app.
+    static let selectableCodes = [
+        "USD", "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "UAH",
+        "CAD", "AUD", "NZD", "JPY", "CNY", "INR", "BRL", "MXN", "ZAR", "TRY",
+    ]
+
+    /// A format style is a value type, so unlike a shared NumberFormatter there
+    /// is nothing here for Swift 6 to reject as an unsafe global.
+    static func format(_ amount: Double, code: String) -> String {
         amount.formatted(.currency(code: code))
     }
 
-    /// The symbol `format` actually prints — "$" in en_US, "$US" in fr_FR.
-    /// Derived from a formatted zero rather than `Locale.currencySymbol`, which
-    /// would return the reader's own currency and disagree with the amounts.
-    static var currencySymbol: String {
-        let zero = (0 as Double).formatted(.currency(code: currencyCode))
+    /// The symbol the formatter actually prints — "$" in en_US, "$US" in fr_FR
+    /// for the same USD. Derived from a formatted zero rather than
+    /// `Locale.currencySymbol`, which returns the reader's own currency and
+    /// would disagree with the amounts on screen.
+    static func symbol(for code: String) -> String {
+        let zero = (0 as Double).formatted(.currency(code: code))
         let stripped = zero.filter { !$0.isNumber && !$0.isWhitespace && $0 != "." && $0 != "," }
-        return stripped.isEmpty ? currencyCode : stripped
+        return stripped.isEmpty ? code : stripped
+    }
+
+    /// "US Dollar", localised for the reader. Falls back to the code itself so
+    /// the picker never shows a blank row.
+    static func name(for code: String) -> String {
+        Locale.current.localizedString(forCurrencyCode: code) ?? code
     }
 
     /// Digits only, for prefilling an editable amount field. Uses the locale's
-    /// decimal separator, which AmountParser reads back correctly.
+    /// decimal separator, which AmountParser reads back.
     static func editable(_ amount: Double) -> String {
         amount.formatted(.number.precision(.fractionLength(2)).grouping(.never))
     }

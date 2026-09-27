@@ -46,14 +46,14 @@ struct CategoriesView: View {
                             Text("Spent")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
-                            Text(Money.format(total))
+                            Text(store.money(total))
                                 .font(.title3.bold().monospacedDigit())
                         }
                     }
                     .frame(height: 220)
                     .listRowInsets(EdgeInsets())
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Spent \(Money.format(total)) this month")
+                    .accessibilityLabel("Spent \(store.money(total)) this month")
                 }
 
                 Section("Breakdown") {
@@ -65,7 +65,7 @@ struct CategoriesView: View {
                                     Text(slice.name)
                                         .font(.body)
                                     Spacer()
-                                    Text(Money.format(slice.value))
+                                    Text(store.money(slice.value))
                                         .font(.body.monospacedDigit())
                                         .foregroundStyle(.secondary)
                                 }
@@ -76,7 +76,7 @@ struct CategoriesView: View {
                         }
                         .padding(.vertical, 4)
                         .accessibilityElement(children: .combine)
-                        .accessibilityLabel("\(slice.name), \(Money.format(slice.value))")
+                        .accessibilityLabel("\(slice.name), \(store.money(slice.value))")
                     }
                 }
             }

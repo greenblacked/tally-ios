@@ -31,11 +31,49 @@ struct RootView: View {
         }
         .tint(Color.tallyAccent)
         .tabBarMinimizeBehavior(.onScrollDown)
+        // The listing promised this and the code never had it. It rides above
+        // the tab bar and collapses with it, so the number you open the app for
+        // stays on screen no matter which tab you are on.
+        .tabViewBottomAccessory {
+            RemainingAccessory()
+        }
         .sheet(isPresented: $showAdd) {
             TransactionFormView(editing: nil)
         }
         .sheet(item: $editing) { item in
             TransactionFormView(editing: item)
+        }
+    }
+}
+
+/// The remaining balance, shown above the tab bar on every tab.
+struct RemainingAccessory: View {
+    @Environment(BudgetStore.self) private var store
+    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
+
+    private var summary: MonthSummary { store.summary }
+
+    var body: some View {
+        // Collapsed into the tab bar there is only room for the number itself.
+        if placement == .inline {
+            Text(store.money(summary.remaining))
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .foregroundStyle(summary.remaining < 0 ? Color.red : Color.primary)
+                .accessibilityLabel("\(store.money(summary.remaining)) left this month")
+        } else {
+            HStack(spacing: 10) {
+                Text("Left this month")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 8)
+                Text(store.money(summary.remaining))
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(summary.remaining < 0 ? Color.red : Color.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .padding(.horizontal, 16)
+            .accessibilityElement(children: .combine)
         }
     }
 }
